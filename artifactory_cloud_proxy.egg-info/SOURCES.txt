@@ -1,0 +1,12 @@
+MANIFEST.in
+README.md
+pyproject.toml
+setup.py
+artifactory_cloud_proxy/__init__.py
+artifactory_cloud_proxy/views.py
+artifactory_cloud_proxy.egg-info/PKG-INFO
+artifactory_cloud_proxy.egg-info/SOURCES.txt
+artifactory_cloud_proxy.egg-info/dependency_links.txt
+artifactory_cloud_proxy.egg-info/entry_points.txt
+artifactory_cloud_proxy.egg-info/requires.txt
+artifactory_cloud_proxy.egg-info/top_level.txt
