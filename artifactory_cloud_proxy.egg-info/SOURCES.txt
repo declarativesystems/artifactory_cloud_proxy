@@ -3,6 +3,9 @@ README.md
 pyproject.toml
 setup.py
 artifactory_cloud_proxy/__init__.py
+artifactory_cloud_proxy/app.py
+artifactory_cloud_proxy/config.py
+artifactory_cloud_proxy/version.py
 artifactory_cloud_proxy/views.py
 artifactory_cloud_proxy.egg-info/PKG-INFO
 artifactory_cloud_proxy.egg-info/SOURCES.txt

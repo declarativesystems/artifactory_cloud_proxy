@@ -1,0 +1,76 @@
+apiVersion: v1.1
+resources:
+  - name: gitArtifactoryCloudProxy
+    type: GitRepo
+    configuration:
+      gitProvider: githubAccountGeoffwilliams
+      path: declarativesystems/artifactory_cloud_proxy
+  - name: pythonEnvArtifactoryCloudProxy
+    type: declarativesystems/PythonEnv
+    configuration:
+      sourceArtifactory: artifactory # for resolving and publishing packages
+      repositoryName: pypi
+
+pipelines:
+  - name: artifactoryCloudProxy
+    configuration:
+      runtime:
+        type: image
+        image:
+          custom:
+            name: "declarativesystems.jfrog.io/docker-local/pipelines"
+            tag: "0.7.0-27"
+            registry: artifactory
+            sourceRepository: docker-local
+
+    steps:
+      - name: pythonBuildAndDeploy
+        type: Bash
+        configuration:
+          integrations:
+            - name: artifactory
+          inputResources:
+            - name: pythonEnvArtifactoryCloudProxy
+            - name: gitArtifactoryCloudProxy
+        execution:
+          onExecute:
+            - cd $res_gitArtifactoryCloudProxy_resourcePath
+            - add_pipeline_variables artifactoryCloudProxyVersion=$(make print_version)
+            - make upload_artifactory
+
+      - name: binaryArtifactoryCloudProxy
+        type: declarativesystems/ArtifactoryDownload
+        configuration:
+          affinityGroup: artifactoryCloudProxy
+          sourceArtifactory: artifactory
+          path: pypi-local/artifactory_cloud_proxy/${artifactoryCloudProxyVersion}/artifactory_cloud_proxy-${artifactoryCloudProxyVersion}-py3-none-any.whl
+          integrations:
+            - name: artifactory
+          inputSteps:
+            - name: pythonBuildAndDeploy
+          inputResources:
+            - name: gitArtifactoryCloudProxy
+
+
+      - name: buildAndPushImage
+        type: Bash
+        configuration:
+          affinityGroup: artifactoryCloudProxy
+          inputResources:
+            - name: gitArtifactoryCloudProxy
+          integrations:
+            - name: quayIo
+          inputSteps:
+            - name: binaryArtifactoryCloudProxy
+        execution:
+          onExecute:
+            - cd $res_gitArtifactoryCloudProxy_resourcePath
+            - mkdir -p dist
+            - cp $res_binaryArtifactoryCloudProxy_resourcePath dist
+            - podman login "$int_quayIo_url" --password $(echo "$int_quayIo_password") --username $(echo "$int_quayIo_username")
+
+            - make image_build
+            - make ci_image_push
+          onFailure:
+            - tree -L 4
+            - env
